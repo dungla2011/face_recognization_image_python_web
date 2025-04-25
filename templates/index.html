@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý khuôn mặt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 80px; /* Để chừa chỗ cho floating menu */
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .face-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .face-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .face-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .face-image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            cursor: pointer;
+        }
+        .face-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .face-info {
+            padding: 10px;
+        }
+        .face-id {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .detail-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        .detail-btn:hover {
+            background-color: #5a6268;
+        }
+        .face-name {
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        .name-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .assign-btn {
+            width: 100%;
+            padding: 8px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .assign-btn:hover {
+            background-color: #45a049;
+        }
+        .floating-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 1000;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .floating-menu button {
+            padding: 10px 20px;
+            margin-left: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .save-all-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        .save-all-btn:hover {
+            background-color: #0069d9;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .status-message {
+            margin-right: 20px;
+            font-weight: bold;
+        }
+        .status-success {
+            color: #28a745;
+        }
+        .status-error {
+            color: #dc3545;
+        }
+        .checkbox-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+        }
+        .face-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .select-all-container {
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+        }
+        .select-all-container input {
+            margin-right: 5px;
+            width: 20px;
+            height: 20px;
+        }
+        #selectedCount {
+            margin-left: 15px;
+            font-weight: bold;
+        }
+        /* Thêm hiệu ứng khi ảnh được chọn */
+        .face-image-container.selected::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 123, 255, 0.3);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quản lý khuôn mặt</h1>
+    
+    <div class="floating-menu">
+        <div class="select-all-container">
+            <input type="checkbox" id="selectAll">
+            <label for="selectAll">Chọn tất cả</label>
+            <span id="selectedCount"></span>
+        </div>
+        
+        <div id="statusMessage" class="status-message"></div>
+        <button id="saveAllBtn" class="save-all-btn">Lưu tất cả thay đổi</button>
+        <button id="deleteBtn" class="delete-btn">Xóa đã chọn</button>
+    </div>
+    
+    <div class="face-grid">
+        {% for face in faces %}
+            <div class="face-card" data-face-id="{{ face.face_id }}">
+                <div class="face-image-container">
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="face-checkbox" data-face-id="{{ face.face_id }}">
+                    </div>
+                    
+                    {% if face.image_data %}
+                        <img src="{{ face.image_data }}" alt="Face {{ face.face_id }}" class="face-image">
+                    {% else %}
+                        <div class="face-image" style="background-color: #eee; display: flex; align-items: center; justify-content: center;">
+                            <span>No image</span>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="face-info">
+                    <div class="face-id">
+                        <span>ID: {{ face.face_id }}</span>
+                        <a href="/face/{{ face.face_id }}" class="detail-btn">Chi tiết</a>
+                    </div>
+                    <div class="face-name">{{ face.user_name or 'Unknown' }}</div>
+                    <input type="text" class="name-input" value="{{ face.user_name or '' }}" placeholder="Nhập tên...">
+                    <button class="assign-btn" onclick="assignName({{ face.face_id }})">Gán tên</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <script>
+        // Lưu những thay đổi chưa lưu
+        const pendingChanges = {};
+        
+        // Hàm gán tên cho một khuôn mặt
+        function assignName(faceId) {
+            const card = document.querySelector(`.face-card[data-face-id="${faceId}"]`);
+            const nameInput = card.querySelector('.name-input');
+            const userName = nameInput.value.trim();
+            
+            if (!userName) {
+                alert('Vui lòng nhập tên!');
+                return;
+            }
+            
+            fetch('/assign_name', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `face_id=${faceId}&user_name=${encodeURIComponent(userName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    card.querySelector('.face-name').textContent = userName;
+                    showStatus(`Đã gán ID ${faceId} cho "${userName}"`, 'success');
+                    
+                    // Xóa khỏi pending changes nếu đã lưu
+                    if (pendingChanges[faceId]) {
+                        delete pendingChanges[faceId];
+                    }
+                } else {
+                    showStatus(`Lỗi: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Lỗi: ${error.message}`, 'error');
+            });
+        }
+        
+        // Theo dõi các thay đổi trong name input
+        document.querySelectorAll('.name-input').forEach(input => {
+            const faceId = input.closest('.face-card').dataset.faceId;
+            const originalName = input.closest('.face-info').querySelector('.face-name').textContent;
+            
+            input.addEventListener('input', () => {
+                const newName = input.value.trim();
+                // Chỉ lưu vào pending nếu khác tên ban đầu
+                if (newName && newName !== originalName && newName !== 'Unknown') {
+                    pendingChanges[faceId] = newName;
+                } else {
+                    delete pendingChanges[faceId];
+                }
+            });
+        });
+        
+        // Lưu tất cả thay đổi
+        document.getElementById('saveAllBtn').addEventListener('click', () => {
+            const updates = Object.entries(pendingChanges).map(([faceId, userName]) => ({
+                face_id: parseInt(faceId),
+                user_name: userName
+            }));
+            
+            if (updates.length === 0) {
+                showStatus('Không có thay đổi để lưu', 'error');
+                return;
+            }
+            
+            showStatus('Đang lưu...', '');
+            
+            fetch('/batch_update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ updates })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showStatus(`Đã lưu ${updates.length} thay đổi thành công!`, 'success');
+                    
+                    // Cập nhật UI
+                    data.results.forEach(result => {
+                        const card = document.querySelector(`.face-card[data-face-id="${result.face_id}"]`);
+                        if (card) {
+                            card.querySelector('.face-name').textContent = result.user_name;
+                        }
+                    });
+                    
+                    // Xóa pendingChanges
+                    Object.keys(pendingChanges).forEach(key => delete pendingChanges[key]);
+                } else {
+                    showStatus(`Lỗi: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Lỗi: ${error.message}`, 'error');
+            });
+        });
+        
+        // Chọn tất cả checkboxes
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.face-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+                updateImageContainerClass(checkbox);
+            });
+            updateSelectedCount();
+        });
+        
+        // Cập nhật số lượng đã chọn
+        function updateSelectedCount() {
+            const selectedCount = document.querySelectorAll('.face-checkbox:checked').length;
+            document.getElementById('selectedCount').textContent = selectedCount > 0 ? 
+                `(Đã chọn ${selectedCount})` : '';
+        }
+        
+        // Cập nhật class cho container khi checkbox thay đổi
+        function updateImageContainerClass(checkbox) {
+            const container = checkbox.closest('.face-card').querySelector('.face-image-container');
+            if (checkbox.checked) {
+                container.classList.add('selected');
+            } else {
+                container.classList.remove('selected');
+            }
+        }
+        
+        // Theo dõi trạng thái checkbox từng face
+        document.querySelectorAll('.face-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                updateImageContainerClass(checkbox);
+                updateSelectedCount();
+                // Kiểm tra nếu tất cả đều được chọn thì select all cũng phải được check
+                const allChecked = document.querySelectorAll('.face-checkbox:not(:checked)').length === 0;
+                document.getElementById('selectAll').checked = allChecked;
+            });
+        });
+        
+        // Xử lý click vào ảnh để toggle checkbox
+        document.querySelectorAll('.face-image-container').forEach(container => {
+            container.addEventListener('click', function(e) {
+                // Ngăn xung đột khi click vào checkbox
+                if (e.target.classList.contains('face-checkbox')) {
+                    return;
+                }
+                
+                const faceId = this.closest('.face-card').dataset.faceId;
+                const checkbox = document.querySelector(`.face-checkbox[data-face-id="${faceId}"]`);
+                
+                // Toggle checkbox
+                checkbox.checked = !checkbox.checked;
+                
+                // Kích hoạt sự kiện change để cập nhật UI
+                const event = new Event('change');
+                checkbox.dispatchEvent(event);
+            });
+        });
+        
+        // Xóa faces đã chọn
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            const selectedCheckboxes = document.querySelectorAll('.face-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                showStatus('Vui lòng chọn ít nhất một khuôn mặt để xóa', 'error');
+                return;
+            }
+            
+            if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedCheckboxes.length} khuôn mặt đã chọn không?`)) {
+                return;
+            }
+            
+            const faceIds = Array.from(selectedCheckboxes).map(
+                checkbox => parseInt(checkbox.dataset.faceId)
+            );
+            
+            showStatus('Đang xóa...', '');
+            
+            fetch('/delete_faces', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ face_ids: faceIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showStatus(`Đã xóa ${data.results.filter(r => r.status === 'success').length} khuôn mặt thành công!`, 'success');
+                    
+                    // Xóa card khỏi UI
+                    data.results.forEach(result => {
+                        if (result.status === 'success') {
+                            const card = document.querySelector(`.face-card[data-face-id="${result.face_id}"]`);
+                            if (card) {
+                                card.remove();
+                            }
+                        }
+                    });
+                    
+                    // Cập nhật count
+                    updateSelectedCount();
+                    
+                    // Nếu không còn face nào, bỏ chọn select all
+                    if (document.querySelectorAll('.face-card').length === 0) {
+                        document.getElementById('selectAll').checked = false;
+                    }
+                    
+                    // Tải lại trang sau 1 giây
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showStatus(`Lỗi: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Lỗi: ${error.message}`, 'error');
+            });
+        });
+        
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = 'status-message';
+            
+            if (type) {
+                statusElement.classList.add(`status-${type}`);
+            }
+            
+            // Tự động ẩn sau 5 giây nếu là thông báo thành công
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusElement.textContent = '';
+                    statusElement.className = 'status-message';
+                }, 5000);
+            }
+        }
+        
+        // Khởi tạo số lượng đã chọn và class cho các container
+        updateSelectedCount();
+        document.querySelectorAll('.face-checkbox').forEach(updateImageContainerClass);
+    </script>
+</body>
+</html>
+    

@@ -1,0 +1,17 @@
+Hãy code nhận dạng người qua ảnh
+
+- mỗi người nhận dạng được sẽ lưu ảnh nhận dạng được vào folder id duy nhất của họ /data_file/<user_id...>, với id này là id trong bảng faceIds dưới đây.
+
+- một db, có thể là sqllite (hoặc các db sau này, code sao thay thế DB dễ dàng)
+
+- mỗi lần nhận dạng sẽ so sánh với các thông tin nhận dạng cũ (vector?) đã lưu trong db, để biết đó là ai
+
+- Bảng users, mỗi người là Duy nhất, có ID và Name
+- Bảng faceIds: mỗi người nhận dạng được sẽ là 1 bản ghi trong này, lần sau nhận dạng đúng người này thì trả lại ID của họ, chứ ko thêm id mới. Khi nhận dạng ra người mới, thì mới thêm 1 bản ghi mới
+
+- Trường hợp nhầm: 1 người thành nhiều người:
+Bảng faceIds lưu id của 1 người, có 1 trường là user_id là id của user trong bảng users
+với ý nghĩa là: nếu 2 faceId là 1 người, thì user_id  sẽ bằng nhau, sẽ được gán lại = tay người duyệt
+
+- Trường hợp nhầm: nhiều người thành 1 người, thì sẽ cần xoá các ảnh nhầm đi, và chạy script học lại trong các file ảnh đã lưu của folder của user đó, để cập nhật lại thông tin vector?
+

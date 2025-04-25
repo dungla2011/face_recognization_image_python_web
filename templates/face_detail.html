@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết khuôn mặt - ID: {{ face.face_id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .face-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .face-header-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: 20px;
+        }
+        .face-info {
+            flex: 1;
+        }
+        .face-info h2 {
+            margin: 0 0 10px 0;
+        }
+        .face-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background-color: #5a6268;
+        }
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .image-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .face-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        .image-actions {
+            padding: 10px;
+        }
+        .delete-img-btn {
+            width: 100%;
+            padding: 8px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .delete-img-btn:hover {
+            background-color: #c82333;
+        }
+        .reassign-container {
+            display: flex;
+            gap: 5px;
+        }
+        .reassign-select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .reassign-btn {
+            padding: 8px;
+            background-color: #ffc107;
+            color: black;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .reassign-btn:hover {
+            background-color: #e0a800;
+        }
+        .image-time {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 5px 0;
+        }
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .empty-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="statusMessage" class="status-message"></div>
+    
+    <a href="/" class="back-btn">← Quay lại</a>
+    
+    <div class="face-header">
+        {% if face.image_path %}
+            <img src="{{ face.image_data }}" alt="Face {{ face.face_id }}" class="face-header-image">
+        {% endif %}
+        <div class="face-info">
+            <h2>{% if face.user_name %}{{ face.user_name }}{% else %}Chưa có tên{% endif %}</h2>
+            <p>ID: {{ face.face_id }}</p>
+            {% if face.user_id %}
+                <p>User ID: {{ face.user_id }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <h1>Tất cả ảnh của khuôn mặt</h1>
+    
+    <div class="images-grid">
+        {% if images %}
+            {% for img in images %}
+                <div class="image-card" data-image-id="{{ img.id }}">
+                    {% if img.image_data %}
+                        <img src="{{ img.image_data }}" alt="Face image" class="face-image">
+                    {% else %}
+                        <div class="face-image" style="background-color: #eee; display: flex; align-items: center; justify-content: center;">
+                            <span>No image</span>
+                        </div>
+                    {% endif %}
+                    <div class="image-actions">
+                        {% if img.created_at %}
+                            <div class="image-time">Thời gian: {{ img.created_at }}</div>
+                        {% endif %}
+                        
+                        {% if img.id is not none %}
+                            <button class="delete-img-btn" onclick="deleteImage({{ img.id }})">Xóa ảnh</button>
+                            
+                            <div class="reassign-container">
+                                <select class="reassign-select" onchange="toggleNewPersonInput(this)">
+                                    <option value="">-- Chọn người khác --</option>
+                                    <option value="new">++ Người mới ++</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}" {% if user.id == face.user_id %}disabled{% endif %}>
+                                            {{ user.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" class="new-person-input" placeholder="Nhập tên người mới" style="display: none; flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <button class="reassign-btn" onclick="reassignImage({{ img.id }}, this)">Gán</button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-message">Không có ảnh nào cho khuôn mặt này</div>
+        {% endif %}
+    </div>
+    
+    <script>
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = 'status-message';
+            
+            if (type) {
+                statusElement.classList.add(`status-${type}`);
+            }
+            
+            statusElement.style.display = 'block';
+            
+            // Tự động ẩn sau 3 giây
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
+        }
+        
+        function deleteImage(imageId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa ảnh này không?')) {
+                return;
+            }
+            
+            fetch(`/delete_image/${imageId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Xóa card khỏi UI
+                    const card = document.querySelector(`.image-card[data-image-id="${imageId}"]`);
+                    if (card) {
+                        card.remove();
+                    }
+                    
+                    // Kiểm tra nếu không còn ảnh nào
+                    const remainingCards = document.querySelectorAll('.image-card');
+                    if (remainingCards.length === 0) {
+                        const grid = document.querySelector('.images-grid');
+                        grid.innerHTML = '<div class="empty-message">Không có ảnh nào cho khuôn mặt này</div>';
+                    }
+                    
+                    showStatus('Đã xóa ảnh thành công', 'success');
+                } else {
+                    showStatus(`Lỗi: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Lỗi: ${error.message}`, 'error');
+            });
+        }
+        
+        function toggleNewPersonInput(selectElement) {
+            const container = selectElement.closest('.reassign-container');
+            const newPersonInput = container.querySelector('.new-person-input');
+            
+            if (selectElement.value === 'new') {
+                newPersonInput.style.display = 'block';
+                selectElement.style.width = '40%';
+            } else {
+                newPersonInput.style.display = 'none';
+                selectElement.style.width = '';
+            }
+        }
+
+        function reassignImage(imageId, buttonElement) {
+            const container = buttonElement.closest('.reassign-container');
+            const select = container.querySelector('.reassign-select');
+            const newPersonInput = container.querySelector('.new-person-input');
+            
+            let userId = select.value;  // Giờ đây chúng ta gọi nó là userId thay vì faceId
+            let newPersonName = '';
+            
+            if (userId === 'new') {
+                newPersonName = newPersonInput.value.trim();
+                if (!newPersonName) {
+                    showStatus('Vui lòng nhập tên người mới', 'error');
+                    return;
+                }
+            } else if (!userId) {
+                showStatus('Vui lòng chọn một người', 'error');
+                return;
+            }
+            
+            // Chuẩn bị dữ liệu gửi đi
+            let formData;
+            if (userId === 'new') {
+                formData = `image_id=${imageId}&new_person_name=${encodeURIComponent(newPersonName)}`;
+            } else {
+                formData = `image_id=${imageId}&user_id=${userId}`;  // Thay đổi face_id thành user_id
+            }
+            
+            fetch('/reassign_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Xóa card khỏi UI
+                    const card = document.querySelector(`.image-card[data-image-id="${imageId}"]`);
+                    if (card) {
+                        card.remove();
+                    }
+                    
+                    // Kiểm tra nếu không còn ảnh nào
+                    const remainingCards = document.querySelectorAll('.image-card');
+                    if (remainingCards.length === 0) {
+                        const grid = document.querySelector('.images-grid');
+                        grid.innerHTML = '<div class="empty-message">Không có ảnh nào cho khuôn mặt này</div>';
+                    }
+                    
+                    showStatus('Đã gán ảnh thành công', 'success');
+                } else {
+                    showStatus(`Lỗi: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus(`Lỗi: ${error.message}`, 'error');
+            });
+        }
+    </script>
+</body>
+</html>
+    
