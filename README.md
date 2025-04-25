@@ -28,7 +28,7 @@ Nếu muốn sử dụng GPU:
 pip install torch==2.4.1 torchvision==0.19.1
 ```
 
-## Cấu trúc thư mục
+## Cấu trúc thư mục 
 
 ├── data_files/ # Thư mục chứa dữ liệu
 │ ├── face_recognition.db # Database SQLite
