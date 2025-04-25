@@ -2,6 +2,9 @@
 
 Hệ thống nhận dạng khuôn mặt sử dụng FaceNet và SQLite để quản lý và nhận dạng người trong ảnh. Hệ thống gồm hai ứng dụng chính: ứng dụng command line (001x1.py) và giao diện web (002.py).
 
+![image](https://github.com/user-attachments/assets/ded8244a-04ee-434b-816a-b435c92d0211)
+
+
 ## Cài đặt
 
 ### Yêu cầu
